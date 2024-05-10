@@ -36,12 +36,15 @@ public class Problem {
 
         Problem problem = (Problem) object;
 
-        return Objects.equals(hash, problem.hash);
+        if (!Objects.equals(hash, problem.hash)) return false;
+        return Arrays.equals(data, problem.data);
     }
 
     @Override
     public int hashCode() {
-        return hash != null ? hash.hashCode() : 0;
+        int result = hash != null ? hash.hashCode() : 0;
+        result = 31 * result + Arrays.hashCode(data);
+        return result;
     }
 
     @Override
