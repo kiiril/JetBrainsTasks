@@ -1,42 +1,55 @@
 package task2;
 
 import com.google.gson.Gson;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import task2.input.InputJson;
-import task2.output.OutputJson;
-import task2.output.Problems;
+import task2.json.AnalysisResult;
+import task2.json.Problem;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
+    private final static Gson gson;
+    static {
+        gson = new Gson();
+    }
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        String[] files = scanner.nextLine().split(" ");
-        Path firstInputPath = Path.of(files[0]);
-//        Path secondInputPath = Path.of(files[1]);
-        Path firstOutputPath = Path.of(files[2]);
-//        Path secondOutputPath = Path.of(files[3]);
-//        Path bothOutputPath = Path.of(files[4]);
-        Gson gson = new Gson();
+        // read file paths from console
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        Path[] inputFiles = new Path[2];
+        Path[] outputFiles = new Path[3];
         try {
-            // read the json file and parse to POJO
-            JsonReader reader = new JsonReader(Files.newBufferedReader(firstInputPath));
-            InputJson inputJson = gson.fromJson(reader, InputJson.class);
+            for (int i = 0; i < inputFiles.length; i++) {
+                inputFiles[i] = Path.of(reader.readLine());
+            }
+            for (int i = 0; i < outputFiles.length; i++) {
+                outputFiles[i] = Path.of(reader.readLine());
+            }
+            // retrieve json from the first analysis file
+            AnalysisResult analysisResult1 = gson.fromJson(Files.newBufferedReader(inputFiles[0]), AnalysisResult.class);
+            // retrieve json from the second analysis file
+            AnalysisResult analysisResult2 = gson.fromJson(Files.newBufferedReader(inputFiles[1]), AnalysisResult.class);
+            // remove duplicated problems
+            Set<Problem> distinctProblems = new HashSet<>();
+            distinctProblems.addAll(Arrays.stream(analysisResult1.getProblems()).toList());
+            distinctProblems.addAll(Arrays.stream(analysisResult2.getProblems()).toList());
+            AnalysisResult analysisResult3 = new AnalysisResult(distinctProblems.toArray(new Problem[]{}));
 
-            // retrieve data needed for output
-            String hash = inputJson.getProperties().getProblems().getItems().getProperties().getHash().getDescription();
-            String[] data = inputJson.getProperties().getProblems().getItems().getProperties().getData().getDescription().split(" ");
-
-            // create POJO output object, convert to json and write to the file
-            Problems problems = new Problems(hash, data);
-            OutputJson outputJson = new OutputJson(new Problems[]{problems});
-            gson.toJson(outputJson, Files.newBufferedWriter(firstOutputPath));
+            // write all results to output files
+            writeToFile(analysisResult1, outputFiles[0]);
+            writeToFile(analysisResult2, outputFiles[1]);
+            writeToFile(analysisResult3, outputFiles[2]);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.out.println("Cannot read from specified file: " + e.getMessage());
         }
     }
-}
+
+    private static void writeToFile(AnalysisResult analysisResult, Path path) {
+        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+            gson.toJson(analysisResult, writer);
+        } catch (IOException e) {
+            System.out.println("Cannot write to specified file: " + e.getMessage());
+        }
+    }
+ }
