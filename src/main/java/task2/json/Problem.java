@@ -1,7 +1,7 @@
 package task2.json;
 
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Problem {
     private String hash;
@@ -37,14 +37,18 @@ public class Problem {
         Problem problem = (Problem) object;
 
         if (!Objects.equals(hash, problem.hash)) return false;
-        return Arrays.equals(data, problem.data);
+        List<String> l1 = new ArrayList<>(Arrays.asList(data));
+        List<String> l2 = new ArrayList<>(Arrays.asList(problem.data));
+
+        Collections.sort(l1);
+        Collections.sort(l2);
+
+        return l1.equals(l2);
     }
 
     @Override
     public int hashCode() {
-        int result = hash != null ? hash.hashCode() : 0;
-        result = 31 * result + Arrays.hashCode(data);
-        return result;
+        return 1;
     }
 
     @Override
